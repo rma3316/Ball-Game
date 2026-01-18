@@ -15,6 +15,11 @@ pygame.display.set_caption("벽돌 깨기 게임")
 # 색상 정의
 DARK_NAVY = (26, 26, 46)  # #1a1a2e
 WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+
+# 폰트 설정
+font = pygame.font.Font(None, 36)
+large_font = pygame.font.Font(None, 72)
 
 # FPS 설정
 FPS = 60
@@ -257,6 +262,13 @@ items = []
 level = 1
 base_ball_speed = BALL_SPEED
 
+# 목숨 시스템 변수
+lives = 3
+life_lost = False
+life_lost_start_time = 0
+flash_screen = False
+flash_start_time = 0
+
 def get_brick_rows_for_level(level):
     """레벨에 따라 벽돌 줄 수 반환"""
     # 1레벨: 10줄, 2레벨: 12줄, 3레벨: 15줄, 이후는 2줄씩 증가
@@ -281,9 +293,14 @@ def create_bricks(brick_rows):
             bricks.append(brick)
     return bricks
 
+def reset_ball():
+    """공을 패들 위에 다시 생성"""
+    global balls
+    balls = [Ball(paddle.rect.centerx, paddle.rect.top - BALL_RADIUS - 5, BALL_RADIUS, base_ball_speed)]
+
 def next_level():
     """다음 레벨로 이동하는 함수"""
-    global level, balls, bricks, items, base_ball_speed
+    global level, balls, bricks, items, base_ball_speed, lives
     
     # 레벨 증가
     level += 1
@@ -291,8 +308,11 @@ def next_level():
     # 공 속도 증가 (매 레벨마다 0.3씩 증가)
     base_ball_speed += 0.3
     
+    # 목숨 초기화 (새 스테이지는 새 마음으로!)
+    lives = 3
+    
     # 공 초기화 (1개, 패들 위에 배치)
-    balls = [Ball(paddle.rect.centerx, paddle.rect.top - BALL_RADIUS - 5, BALL_RADIUS, base_ball_speed)]
+    reset_ball()
     
     # 아이템 리스트 초기화
     items = []
@@ -301,7 +321,7 @@ def next_level():
     brick_rows = get_brick_rows_for_level(level)
     bricks = create_bricks(brick_rows)
     
-    print(f"레벨 {level} 시작! 벽돌 {brick_rows}줄")
+    print(f"레벨 {level} 시작! 벽돌 {brick_rows}줄, 목숨: {lives}")
 
 # 블록 생성 (초기 레벨)
 bricks = create_bricks(get_brick_rows_for_level(level))
@@ -336,6 +356,18 @@ while running:
         if current_time - clear_start_time >= 2000:
             stage_clear = False
             next_level()
+    
+    # Life Lost 메시지 타이머
+    if life_lost:
+        current_time = pygame.time.get_ticks()
+        if current_time - life_lost_start_time >= 1500:  # 1.5초 후 메시지 제거
+            life_lost = False
+    
+    # 화면 깜빡임 효과 타이머
+    if flash_screen:
+        current_time = pygame.time.get_ticks()
+        if current_time - flash_start_time >= 300:  # 0.3초 동안 깜빡임
+            flash_screen = False
     
     # 게임 오버 체크
     if not game_over and not stage_clear:
@@ -385,13 +417,33 @@ while running:
         for ball in balls_to_remove:
             balls.remove(ball)
         
-        # 게임 오버 체크 (모든 공이 떨어졌을 때)
+        # 모든 공이 떨어졌을 때 처리
         if len(balls) == 0:
-            game_over = True
-            print("게임 오버! 모든 공이 화면 아래로 떨어졌습니다.")
+            if lives > 1:
+                # 목숨이 남아있으면 목숨 감소 및 공 재생성
+                lives -= 1
+                reset_ball()
+                life_lost = True
+                life_lost_start_time = pygame.time.get_ticks()
+                flash_screen = True
+                flash_start_time = pygame.time.get_ticks()
+                print(f"목숨 소실! 남은 목숨: {lives}")
+            else:
+                # 목숨이 없으면 게임 오버
+                game_over = True
+                print("게임 오버! 모든 목숨을 잃었습니다.")
     
     # 화면 그리기
-    SCREEN.fill(DARK_NAVY)
+    if flash_screen:
+        # 빨간색 깜빡임 효과
+        SCREEN.fill(RED)
+        # 깜빡임 중에도 반투명하게 게임 요소 표시
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(128)
+        overlay.fill(DARK_NAVY)
+        SCREEN.blit(overlay, (0, 0))
+    else:
+        SCREEN.fill(DARK_NAVY)
     
     # 블록 그리기
     for brick in bricks:
@@ -415,11 +467,27 @@ while running:
     level_text = font.render(f"레벨: {level}", True, WHITE)
     SCREEN.blit(level_text, (10, 50))
     
+    # 목숨 표시 (왼쪽 위, 레벨 아래)
+    lives_text = font.render(f"목숨: {lives}", True, WHITE)
+    SCREEN.blit(lives_text, (10, 90))
+    
+    # Life Lost 메시지 표시
+    if life_lost:
+        life_lost_text = large_font.render("Life Lost!", True, RED)
+        text_rect = life_lost_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        SCREEN.blit(life_lost_text, text_rect)
+    
     # 스테이지 클리어 메시지 표시
     if stage_clear:
         clear_text = large_font.render("STAGE CLEAR!", True, WHITE)
         text_rect = clear_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         SCREEN.blit(clear_text, text_rect)
+    
+    # 게임 오버 메시지 표시
+    if game_over:
+        game_over_text = large_font.render("GAME OVER", True, RED)
+        text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        SCREEN.blit(game_over_text, text_rect)
     
     # 화면 업데이트
     pygame.display.flip()
@@ -430,4 +498,3 @@ while running:
 # 게임 종료
 pygame.quit()
 sys.exit()
-
