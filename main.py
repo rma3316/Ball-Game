@@ -281,15 +281,33 @@ class Paddle:
         
         pygame.draw.rect(surface, color, self.rect)
         
-        if self.laser_timer > 0:
-            timer_text = small_font.render(f"레이저:{self.laser_timer//60}초", True, YELLOW)
-            surface.blit(timer_text, (self.rect.centerx - 40, self.rect.top - 20))
+        # 동적 스택 시스템: 활성화된 버프를 위에서부터 쌓아서 표시
+        y_offset = 0
+        buff_spacing = 22  # 각 버프 텍스트 사이 간격
+        
+        # 관통탄 효과
         if self.power_timer > 0:
-            timer_text = small_font.render(f"관통:{self.power_timer//60}초", True, RED)
-            surface.blit(timer_text, (self.rect.centerx - 35, self.rect.top - 20))
+            seconds = self.power_timer / 60
+            timer_text = small_font.render(f"POWER {seconds:.1f}초", True, RED)
+            text_rect = timer_text.get_rect(center=(self.rect.centerx, self.rect.top - 20 - y_offset))
+            surface.blit(timer_text, text_rect)
+            y_offset += buff_spacing
+        
+        # 자석 효과
         if self.magnet_timer > 0:
-            timer_text = small_font.render(f"자석:{self.magnet_timer//60}초", True, PURPLE)
-            surface.blit(timer_text, (self.rect.centerx - 35, self.rect.top - 20))
+            seconds = self.magnet_timer / 60
+            timer_text = small_font.render(f"MAGNET {seconds:.1f}초", True, PURPLE)
+            text_rect = timer_text.get_rect(center=(self.rect.centerx, self.rect.top - 20 - y_offset))
+            surface.blit(timer_text, text_rect)
+            y_offset += buff_spacing
+        
+        # 레이저 효과
+        if self.laser_timer > 0:
+            seconds = self.laser_timer / 60
+            timer_text = small_font.render(f"LASER {seconds:.1f}초", True, YELLOW)
+            text_rect = timer_text.get_rect(center=(self.rect.centerx, self.rect.top - 20 - y_offset))
+            surface.blit(timer_text, text_rect)
+            y_offset += buff_spacing
 
 
 class Brick:
@@ -407,32 +425,67 @@ class Ball:
         self.rect.center = (self.x, self.y)
     
     def check_wall_collision(self):
+        # 왼쪽 벽 충돌
         if self.x - self.radius <= 0:
             self.x = self.radius
             self.vx = -self.vx
+            # 랜덤 노이즈 추가
+            self.vx += random.uniform(-0.5, 0.5)
         
+        # 오른쪽 벽 충돌
         if self.x + self.radius >= SCREEN_WIDTH:
             self.x = SCREEN_WIDTH - self.radius
             self.vx = -self.vx
+            # 랜덤 노이즈 추가
+            self.vx += random.uniform(-0.5, 0.5)
         
+        # 위쪽 벽 충돌
         if self.y - self.radius <= 0:
             self.y = self.radius
             self.vy = -self.vy
+            # 랜덤 노이즈 추가
+            self.vx += random.uniform(-0.5, 0.5)
+        
+        # 속도 정규화 (일정한 속도 유지)
+        self.normalize_velocity()
     
     def check_paddle_collision(self, paddle):
         if self.rect.colliderect(paddle.rect):
-            if self.vy > 0:
-                hit_pos = (self.x - paddle.rect.left) / paddle.width
-                hit_pos = (hit_pos - 0.5) * 2
+            if self.vy > 0:  # 공이 아래로 떨어지는 중일 때만
+                # Relative Intersect 알고리즘
+                # 패들과 공의 중심 차이 계산
+                offset = self.x - paddle.rect.centerx
+                # 정규화된 offset (-1.0 ~ 1.0)
+                normalized_offset = offset / (paddle.width / 2)
                 
-                angle = hit_pos * 60
-                angle_rad = math.radians(angle)
+                # 현재 속도의 크기 저장
+                current_speed = math.sqrt(self.vx ** 2 + self.vy ** 2)
                 
-                speed = math.sqrt(self.vx ** 2 + self.vy ** 2)
-                self.vx = speed * math.sin(angle_rad)
-                self.vy = -speed * math.cos(angle_rad)
+                # 각도 계산 (-60도 ~ 60도)
+                bounce_angle = normalized_offset * 60
+                angle_rad = math.radians(bounce_angle)
                 
+                # 새로운 속도 벡터 계산
+                self.vx = current_speed * math.sin(angle_rad)
+                self.vy = -current_speed * math.cos(angle_rad)
+                
+                # 최소 가로 속도 강제 (무한 루프 방지)
+                min_horizontal_speed = 2.0
+                if abs(self.vx) < min_horizontal_speed:
+                    if self.vx == 0:
+                        # 완전히 수직이면 랜덤 방향으로
+                        self.vx = random.choice([-min_horizontal_speed, min_horizontal_speed])
+                    elif self.vx > 0:
+                        self.vx = min_horizontal_speed
+                    else:
+                        self.vx = -min_horizontal_speed
+                    
+                    # 가로 속도를 강제했으니 속도 정규화
+                    self.normalize_velocity()
+                
+                # 공이 패들 안에 들어가지 않도록 위치 조정
                 self.y = paddle.rect.top - self.radius
+                self.rect.center = (self.x, self.y)
     
     def check_brick_collision(self, bricks, items, power_mode=False):
         hit_brick = False
@@ -479,9 +532,14 @@ class Ball:
                 if should_bounce:
                     if abs(dx) > abs(dy):
                         self.vx = -self.vx
+                        # 랜덤 노이즈 추가
+                        self.vx += random.uniform(-0.5, 0.5)
                     else:
                         self.vy = -self.vy
+                        # 랜덤 노이즈 추가
+                        self.vx += random.uniform(-0.5, 0.5)
                     
+                    # 위치 조정
                     if abs(dx) > abs(dy):
                         if dx > 0:
                             self.x = brick.rect.right + self.radius
@@ -494,6 +552,9 @@ class Ball:
                             self.y = brick.rect.top - self.radius
                     
                     self.rect.center = (self.x, self.y)
+                    
+                    # 속도 정규화
+                    self.normalize_velocity()
                     
                     if not power_mode or brick.is_hard:
                         break
