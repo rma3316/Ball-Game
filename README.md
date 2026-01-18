@@ -26,6 +26,6 @@
 3. 게임 실행: `python main.py`
 
 ## 🎨 Credits
-*   **Development:** [본인 이름/닉네임]
+*   **Development:** [한결/지헌]
 *   **Engine:** Python + Pygame
-*   **Font:** NanumGothic (Naver)
+*   **Font:** Pretendard
