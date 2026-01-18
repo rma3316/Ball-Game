@@ -424,6 +424,16 @@ class Ball:
         self.y += self.vy
         self.rect.center = (self.x, self.y)
     
+    def normalize_velocity(self):
+        """속도 벡터를 정규화하여 일정한 속도 유지"""
+        current_speed = math.sqrt(self.vx ** 2 + self.vy ** 2)
+        if current_speed > 0:
+            self.vx = (self.vx / current_speed) * self.speed
+            self.vy = (self.vy / current_speed) * self.speed
+        self.x += self.vx
+        self.y += self.vy
+        self.rect.center = (self.x, self.y)
+    
     def check_wall_collision(self):
         # 왼쪽 벽 충돌
         if self.x - self.radius <= 0:
@@ -689,10 +699,13 @@ while running:
             stage_clear = False
             next_level()
     
-    if not game_over and not stage_clear and len(bricks) == 0:
-        stage_clear = True
-        clear_start_time = pygame.time.get_ticks()
-        print("스테이지 클리어!")
+    if not game_over and not stage_clear:
+        # 스테이지 클리어 조건: 일반 블록(is_hard=False)이 모두 사라졌는지 확인
+        normal_bricks = [brick for brick in bricks if not brick.is_hard]
+        if len(normal_bricks) == 0:
+            stage_clear = True
+            clear_start_time = pygame.time.get_ticks()
+            print("스테이지 클리어!")
     
     if stage_clear:
         current_time = pygame.time.get_ticks()
