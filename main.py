@@ -24,13 +24,26 @@ CYAN = (0, 255, 255)
 GRAY = (128, 128, 128)
 DARK_RED = (200, 0, 0)
 
+# 로컬 폰트 로드 (font.ttf)
+def load_font(size, bold=False):
+    try:
+        font = pygame.font.Font("font.ttf", size)
+        if bold:
+            font.set_bold(True)
+        return font
+    except:
+        # font.ttf 파일이 없으면 기본 폰트 사용
+        font = pygame.font.Font(None, size)
+        if bold:
+            font.set_bold(True)
+        return font
+
 # 폰트 설정
-font = pygame.font.Font(None, 36)
-small_font = pygame.font.Font(None, 20)
-medium_font = pygame.font.Font(None, 28)
-bold_font = pygame.font.Font(None, 32)
-bold_font.set_bold(True)
-large_font = pygame.font.Font(None, 72)
+font = load_font(36)
+small_font = load_font(20)
+medium_font = load_font(28)
+bold_font = load_font(32, bold=True)
+large_font = load_font(72)
 
 # FPS 설정
 FPS = 60
@@ -46,11 +59,11 @@ BALL_RADIUS = 10
 BALL_SPEED = 5
 
 # 아이템 타입 정의
-ITEM_PLUS_1 = "plus_1"      # 파랑: 공 +1
-ITEM_DOUBLE = "double"       # 초록: 공 x2
-ITEM_LASER = "laser"         # 노랑: 레이저 모드
-ITEM_POWER = "power"         # 빨강: 관통탄 모드
-ITEM_MAGNET = "magnet"       # 보라: 아이템 자석 모드
+ITEM_PLUS_1 = "plus_1"
+ITEM_DOUBLE = "double"
+ITEM_LASER = "laser"
+ITEM_POWER = "power"
+ITEM_MAGNET = "magnet"
 
 # 아이템 색상 매핑
 ITEM_COLORS = {
@@ -62,9 +75,10 @@ ITEM_COLORS = {
 }
 
 # 아이템 설정
-ITEM_DROP_RATE = 0.3  # 30% 확률로 아이템 드롭
-ITEM_RADIUS = 18  # 아이템 반지름
+ITEM_DROP_RATE = 0.3
+ITEM_RADIUS = 18
 ITEM_BASE_SPEED = 3
+MAGNET_RANGE = 300  # 자석 효과 거리 제한
 
 # 레이저 설정
 LASER_WIDTH = 3
@@ -72,31 +86,112 @@ LASER_HEIGHT = 20
 LASER_SPEED = 15
 LASER_COLOR = YELLOW
 
-# 블록 설정
-BRICK_ROWS = 15
-BRICK_COLS = 10
-BRICK_GAP = 3
-BRICK_WIDTH = (SCREEN_WIDTH - (BRICK_COLS + 1) * BRICK_GAP) // BRICK_COLS
-BRICK_HEIGHT = 25
-BRICK_OFFSET_TOP = 50
+# 블록 설정 (빽빽한 스타일)
+BRICK_COLS = 20
+BRICK_PADDING = 1
+BRICK_WIDTH = (SCREEN_WIDTH - (BRICK_COLS + 1) * BRICK_PADDING) // BRICK_COLS
+BRICK_HEIGHT = 20
+BRICK_OFFSET_TOP = 80
 
-# 무지개 색상 정의 (15가지)
+# 무지개 색상 정의 (20가지로 확장)
 RAINBOW_COLORS = [
     (255, 0, 0),      # 빨강
+    (255, 64, 0),     # 주황빨강
     (255, 127, 0),    # 주황
+    (255, 191, 0),    # 황주황
     (255, 255, 0),    # 노랑
     (191, 255, 0),    # 연두
+    (127, 255, 0),    # 초록연두
     (0, 255, 0),      # 초록
     (0, 255, 127),    # 청록
+    (0, 255, 191),    # 밝은청록
     (0, 255, 255),    # 하늘색
+    (0, 191, 255),    # 밝은파랑
     (0, 127, 255),    # 파랑
+    (0, 64, 255),     # 진한파랑
     (0, 0, 255),      # 남색
+    (64, 0, 255),     # 남보라
     (127, 0, 255),    # 보라
+    (191, 0, 255),    # 자주보라
     (255, 0, 255),    # 자홍
     (255, 0, 127),    # 분홍
-    (255, 64, 64),    # 연한 빨강
-    (255, 165, 0),    # 오렌지
-    (255, 192, 203),  # 핑크
+]
+
+# 레벨 데이터 (텍스트 기반 맵 에디터)
+# '#' = 일반 블록, '@' = 단단한 블록, ' ' = 빈 공간
+LEVELS = [
+    # 레벨 1: 하트 모양
+    [
+        "                    ",
+        "                    ",
+        "  ##    ####    ##  ",
+        " ####  ######  #### ",
+        "####################",
+        "####################",
+        " ################## ",
+        "  ################  ",
+        "   ##############   ",
+        "    ############    ",
+        "     ##########     ",
+        "      ########      ",
+        "       ######       ",
+        "        ####        ",
+        "         ##         ",
+    ],
+    # 레벨 2: 피라미드 with 단단한 블록
+    [
+        "                    ",
+        "         ##         ",
+        "        ####        ",
+        "       ######       ",
+        "      @@@@@@@@      ",
+        "     ##########     ",
+        "    ############    ",
+        "   ##@@@@@@@@@@##   ",
+        "  ################  ",
+        " ################## ",
+        "####################",
+        "@@@@@@@@@@@@@@@@@@@@",
+        "####################",
+        "####################",
+        "####################",
+    ],
+    # 레벨 3: 체스판 패턴
+    [
+        "# # # # # # # # # # ",
+        " # # # # # # # # # #",
+        "# # # # # # # # # # ",
+        " # # # # # # # # # #",
+        "# # # # # # # # # # ",
+        " # # # # # # # # # #",
+        "@@@@@@@@@@@@@@@@@@@@",
+        " # # # # # # # # # #",
+        "# # # # # # # # # # ",
+        " # # # # # # # # # #",
+        "# # # # # # # # # # ",
+        " # # # # # # # # # #",
+        "# # # # # # # # # # ",
+        " # # # # # # # # # #",
+        "@@@@@@@@@@@@@@@@@@@@",
+    ],
+    # 레벨 4: 다이아몬드
+    [
+        "                    ",
+        "         ##         ",
+        "        ####        ",
+        "       ##@@##       ",
+        "      ##@@@@##      ",
+        "     ##@@@@@@##     ",
+        "    ##@@@@@@@@##    ",
+        "   ##@@@@@@@@@@##   ",
+        "  ##@@@@@@@@@@@@##  ",
+        "   ##@@@@@@@@@@##   ",
+        "    ##@@@@@@@@##    ",
+        "     ##@@@@@@##     ",
+        "      ##@@@@##      ",
+        "       ##@@##       ",
+        "        ####        ",
+    ],
 ]
 
 class Laser:
@@ -124,7 +219,6 @@ class Laser:
     
     def draw(self, surface):
         pygame.draw.rect(surface, LASER_COLOR, self.rect)
-        # 레이저 빔 효과
         pygame.draw.rect(surface, (255, 255, 200), self.rect.inflate(-1, 0))
 
 class Paddle:
@@ -133,25 +227,20 @@ class Paddle:
         self.width = width
         self.height = height
         
-        # 버프 타이머 (프레임 단위)
         self.laser_timer = 0
         self.power_timer = 0
         self.magnet_timer = 0
         
-        # 레이저 발사 쿨다운
         self.laser_cooldown = 0
     
     def update(self, mouse_x):
-        # 마우스 X 좌표를 패들 중심에 맞춤
         self.rect.centerx = mouse_x
         
-        # 화면 밖으로 나가지 않도록 제한
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
         
-        # 타이머 감소
         if self.laser_timer > 0:
             self.laser_timer -= 1
         if self.power_timer > 0:
@@ -162,28 +251,26 @@ class Paddle:
             self.laser_cooldown -= 1
     
     def activate_laser(self):
-        self.laser_timer = 600  # 10초 (60 FPS * 10)
+        self.laser_timer = 600
     
     def activate_power(self):
-        self.power_timer = 600  # 10초
+        self.power_timer = 600
     
     def activate_magnet(self):
-        self.magnet_timer = 300  # 5초
+        self.magnet_timer = 300
     
     def can_shoot_laser(self):
         return self.laser_timer > 0 and self.laser_cooldown == 0
     
     def shoot_laser(self):
         if self.can_shoot_laser():
-            self.laser_cooldown = 20  # 0.33초 쿨다운
-            # 패들 양쪽 끝에서 레이저 발사
+            self.laser_cooldown = 20
             left_laser = Laser(self.rect.left + 5, self.rect.top)
             right_laser = Laser(self.rect.right - 5, self.rect.top)
             return [left_laser, right_laser]
         return []
     
     def draw(self, surface):
-        # 버프 상태에 따라 패들 색상 변경
         color = WHITE
         if self.laser_timer > 0:
             color = YELLOW
@@ -194,34 +281,27 @@ class Paddle:
         
         pygame.draw.rect(surface, color, self.rect)
         
-        # 버프 지속시간 표시
         if self.laser_timer > 0:
-            timer_text = small_font.render(f"LASER:{self.laser_timer//60}s", True, YELLOW)
+            timer_text = small_font.render(f"레이저:{self.laser_timer//60}초", True, YELLOW)
             surface.blit(timer_text, (self.rect.centerx - 40, self.rect.top - 20))
         if self.power_timer > 0:
-            timer_text = small_font.render(f"POWER:{self.power_timer//60}s", True, RED)
-            surface.blit(timer_text, (self.rect.centerx - 40, self.rect.top - 20))
+            timer_text = small_font.render(f"관통:{self.power_timer//60}초", True, RED)
+            surface.blit(timer_text, (self.rect.centerx - 35, self.rect.top - 20))
         if self.magnet_timer > 0:
-            timer_text = small_font.render(f"MAGNET:{self.magnet_timer//60}s", True, PURPLE)
-            surface.blit(timer_text, (self.rect.centerx - 45, self.rect.top - 20))
+            timer_text = small_font.render(f"자석:{self.magnet_timer//60}초", True, PURPLE)
+            surface.blit(timer_text, (self.rect.centerx - 35, self.rect.top - 20))
 
 
 class Brick:
     def __init__(self, x, y, width, height, color, is_hard=False):
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
-        self.is_hard = is_hard  # 단단한 블록 여부
+        self.is_hard = is_hard
     
     def draw(self, surface):
         if self.is_hard:
-            # 단단한 블록은 회색으로 표시
             pygame.draw.rect(surface, GRAY, self.rect)
-            # 테두리 추가
-            pygame.draw.rect(surface, WHITE, self.rect, 2)
-            # 'H' 표시
-            h_text = small_font.render("H", True, WHITE)
-            text_rect = h_text.get_rect(center=self.rect.center)
-            surface.blit(h_text, text_rect)
+            pygame.draw.rect(surface, WHITE, self.rect, 1)
         else:
             pygame.draw.rect(surface, self.color, self.rect)
 
@@ -237,35 +317,35 @@ class Item:
         self.vx = 0
         self.vy = ITEM_BASE_SPEED
         
-        # 애니메이션 변수
-        self.pulse_offset = random.uniform(0, math.pi * 2)  # 랜덤 시작 위상
+        self.pulse_offset = random.uniform(0, math.pi * 2)
         self.float_offset = random.uniform(0, math.pi * 2)
         self.frame_count = 0
     
     def update(self, paddle=None):
         self.frame_count += 1
         
-        # 자석 효과 적용
+        # 개선된 자석 효과 (거리 제한 + 부드러운 가속)
         if paddle and paddle.magnet_timer > 0:
-            # 패들 중심으로 향하는 벡터 계산
             dx = paddle.rect.centerx - self.x
             dy = paddle.rect.centery - self.y
             dist = math.sqrt(dx*dx + dy*dy)
             
-            if dist > 0:
+            # 300px 이내일 때만 자석 효과 적용
+            if dist <= MAGNET_RANGE and dist > 0:
                 # 정규화된 방향 벡터
                 dx /= dist
                 dy /= dist
                 
-                # 자석 강도 (거리에 반비례)
-                magnet_strength = min(8, 800 / max(dist, 50))
+                # 부드러운 가속 (Lerp 스타일)
+                # 거리에 따라 가속도 조절 (멀수록 약하게)
+                magnet_strength = (MAGNET_RANGE - dist) / MAGNET_RANGE * 0.5
                 
-                self.vx += dx * magnet_strength * 0.4
-                self.vy += dy * magnet_strength * 0.4
+                self.vx += dx * magnet_strength
+                self.vy += dy * magnet_strength
                 
-                # 최대 속도 제한
+                # 최대 속도 제한 (부드럽게)
                 speed = math.sqrt(self.vx*self.vx + self.vy*self.vy)
-                max_speed = 15
+                max_speed = 8
                 if speed > max_speed:
                     self.vx = (self.vx / speed) * max_speed
                     self.vy = (self.vy / speed) * max_speed
@@ -274,9 +354,9 @@ class Item:
         self.x += self.vx
         self.y += self.vy
         
-        # 둥둥 떠다니는 효과 (sin 함수 사용)
-        float_amplitude = 2
-        self.y += math.sin(self.frame_count * 0.1 + self.float_offset) * 0.3
+        # 둥둥 떠다니는 효과
+        float_amplitude = 1.5
+        self.y += math.sin(self.frame_count * 0.1 + self.float_offset) * 0.25
         
         self.rect.center = (int(self.x), int(self.y))
     
@@ -287,21 +367,16 @@ class Item:
         return self.rect.colliderect(paddle.rect)
     
     def draw(self, surface):
-        # Pulse 애니메이션 (크기 변화)
+        # Pulse 애니메이션
         pulse = math.sin(self.frame_count * 0.15 + self.pulse_offset) * 2
         current_radius = self.radius + pulse
         
         color = ITEM_COLORS[self.item_type]
         
-        # 아이템 원 그리기
         pygame.draw.circle(surface, color, (int(self.x), int(self.y)), int(current_radius))
-        
-        # 흰색 테두리
         pygame.draw.circle(surface, WHITE, (int(self.x), int(self.y)), int(current_radius), 2)
         
-        # 내부 텍스트
         if self.item_type == ITEM_PLUS_1:
-            # 작은 공 그림 + 텍스트
             ball_text = small_font.render("●+1", True, WHITE)
         elif self.item_type == ITEM_DOUBLE:
             ball_text = small_font.render("●x2", True, WHITE)
@@ -373,51 +448,40 @@ class Ball:
                 dx = ball_center_x - brick_center_x
                 dy = ball_center_y - brick_center_y
                 
-                # 아이템 드롭
                 if random.random() < ITEM_DROP_RATE:
                     item_type = self.get_random_item_type()
                     item = Item(brick_center_x, brick_center_y, item_type)
                     items.append(item)
                 
-                # 블록 제거 준비
                 should_remove = True
                 should_bounce = True
                 
                 if power_mode:
-                    # 관통탄 모드
                     if brick.is_hard:
-                        # 단단한 블록: 튕기면서 파괴
                         should_bounce = True
                         should_remove = True
                     else:
-                        # 일반 블록: 관통 (튕기지 않음)
                         should_bounce = False
                         should_remove = True
                 else:
-                    # 일반 모드
                     if brick.is_hard:
-                        # 단단한 블록: 튕기기만 하고 파괴 안 됨
                         should_bounce = True
                         should_remove = False
                     else:
-                        # 일반 블록: 튕기면서 파괴
                         should_bounce = True
                         should_remove = True
                 
-                # 블록 제거
                 if should_remove:
                     bricks_to_remove.append(brick)
                 
                 hit_brick = True
                 
-                # 반사 처리
                 if should_bounce:
                     if abs(dx) > abs(dy):
                         self.vx = -self.vx
                     else:
                         self.vy = -self.vy
                     
-                    # 위치 조정
                     if abs(dx) > abs(dy):
                         if dx > 0:
                             self.x = brick.rect.right + self.radius
@@ -431,11 +495,9 @@ class Ball:
                     
                     self.rect.center = (self.x, self.y)
                     
-                    # 관통탄 아닐 때는 한 번만 처리
                     if not power_mode or brick.is_hard:
                         break
         
-        # 제거할 블록들 일괄 제거
         for brick in bricks_to_remove:
             if brick in bricks:
                 bricks.remove(brick)
@@ -443,17 +505,16 @@ class Ball:
         return hit_brick
     
     def get_random_item_type(self):
-        """아이템 타입을 확률적으로 선택"""
         rand = random.random()
-        if rand < 0.6:  # 60%
+        if rand < 0.6:
             return ITEM_PLUS_1
-        elif rand < 0.7:  # 10%
+        elif rand < 0.7:
             return ITEM_DOUBLE
-        elif rand < 0.8:  # 10%
+        elif rand < 0.8:
             return ITEM_LASER
-        elif rand < 0.9:  # 10%
+        elif rand < 0.9:
             return ITEM_POWER
-        else:  # 10%
+        else:
             return ITEM_MAGNET
     
     def clone(self):
@@ -473,9 +534,7 @@ class Ball:
         return False
     
     def draw(self, surface, power_mode=False):
-        # 관통탄 모드일 때 빨간색
         if power_mode:
-            # 외곽선
             pygame.draw.circle(surface, DARK_RED, (int(self.x), int(self.y)), self.radius + 2)
             pygame.draw.circle(surface, RED, (int(self.x), int(self.y)), self.radius)
         else:
@@ -507,29 +566,22 @@ life_lost_start_time = 0
 flash_screen = False
 flash_start_time = 0
 
-def get_brick_rows_for_level(level):
-    if level == 1:
-        return 10
-    elif level == 2:
-        return 12
-    elif level == 3:
-        return 15
-    else:
-        return min(15 + (level - 3) * 2, 20)
-
-def create_bricks(brick_rows):
+def create_bricks(level_data):
+    """텍스트 기반 맵 데이터로 블록 생성"""
     bricks = []
-    for row in range(brick_rows):
-        color = RAINBOW_COLORS[row % len(RAINBOW_COLORS)]
-        for col in range(BRICK_COLS):
-            x = BRICK_GAP + col * (BRICK_WIDTH + BRICK_GAP)
-            y = BRICK_OFFSET_TOP + row * (BRICK_HEIGHT + BRICK_GAP)
-            
-            # 15% 확률로 단단한 블록 생성 (레벨 2 이상부터)
-            is_hard = (level >= 2) and (random.random() < 0.15)
-            
-            brick = Brick(x, y, BRICK_WIDTH, BRICK_HEIGHT, color, is_hard)
-            bricks.append(brick)
+    for row_idx, row_str in enumerate(level_data):
+        color = RAINBOW_COLORS[row_idx % len(RAINBOW_COLORS)]
+        for col_idx, char in enumerate(row_str):
+            if char == '#':  # 일반 블록
+                x = BRICK_PADDING + col_idx * (BRICK_WIDTH + BRICK_PADDING)
+                y = BRICK_OFFSET_TOP + row_idx * (BRICK_HEIGHT + BRICK_PADDING)
+                brick = Brick(x, y, BRICK_WIDTH, BRICK_HEIGHT, color, is_hard=False)
+                bricks.append(brick)
+            elif char == '@':  # 단단한 블록
+                x = BRICK_PADDING + col_idx * (BRICK_WIDTH + BRICK_PADDING)
+                y = BRICK_OFFSET_TOP + row_idx * (BRICK_HEIGHT + BRICK_PADDING)
+                brick = Brick(x, y, BRICK_WIDTH, BRICK_HEIGHT, GRAY, is_hard=True)
+                bricks.append(brick)
     return bricks
 
 def reset_ball():
@@ -548,18 +600,18 @@ def next_level():
     items = []
     lasers = []
     
-    # 버프 초기화
     paddle.laser_timer = 0
     paddle.power_timer = 0
     paddle.magnet_timer = 0
     
-    brick_rows = get_brick_rows_for_level(level)
-    bricks = create_bricks(brick_rows)
+    # 레벨 인덱스 계산 (순환)
+    level_index = (level - 1) % len(LEVELS)
+    bricks = create_bricks(LEVELS[level_index])
     
-    print(f"레벨 {level} 시작! 벽돌 {brick_rows}줄, 목숨: {lives}")
+    print(f"레벨 {level} 시작! 목숨: {lives}")
 
 # 블록 생성
-bricks = create_bricks(get_brick_rows_for_level(level))
+bricks = create_bricks(LEVELS[0])
 
 # 게임 상태 변수
 running = True
@@ -579,7 +631,7 @@ while running:
     if not game_over and not stage_clear and len(bricks) == 0:
         stage_clear = True
         clear_start_time = pygame.time.get_ticks()
-        print("STAGE CLEAR!")
+        print("스테이지 클리어!")
     
     if stage_clear:
         current_time = pygame.time.get_ticks()
@@ -602,11 +654,9 @@ while running:
         
         paddle.update(mouse_x)
         
-        # 레이저 자동 발사
         new_lasers = paddle.shoot_laser()
         lasers.extend(new_lasers)
         
-        # 레이저 업데이트
         for laser in lasers[:]:
             laser.update()
             
@@ -615,7 +665,6 @@ while running:
             elif laser.check_brick_collision(bricks):
                 lasers.remove(laser)
         
-        # 아이템 업데이트
         for item in items[:]:
             item.update(paddle)
             
@@ -624,7 +673,6 @@ while running:
             elif item.check_paddle_collision(paddle):
                 items.remove(item)
                 
-                # 아이템 효과 적용
                 if item.item_type == ITEM_PLUS_1:
                     if len(balls) > 0:
                         new_ball = balls[0].clone()
@@ -651,7 +699,6 @@ while running:
                     paddle.activate_magnet()
                     print("자석 모드 활성화!")
         
-        # 공 업데이트
         balls_to_remove = []
         for ball in balls:
             ball.update()
@@ -676,7 +723,7 @@ while running:
                 print(f"목숨 소실! 남은 목숨: {lives}")
             else:
                 game_over = True
-                print("게임 오버! 모든 목숨을 잃었습니다.")
+                print("게임 오버!")
     
     # 화면 그리기
     if flash_screen:
@@ -712,17 +759,17 @@ while running:
     SCREEN.blit(lives_text, (10, 90))
     
     if life_lost:
-        life_lost_text = large_font.render("Life Lost!", True, RED)
+        life_lost_text = large_font.render("목숨 소실!", True, RED)
         text_rect = life_lost_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         SCREEN.blit(life_lost_text, text_rect)
     
     if stage_clear:
-        clear_text = large_font.render("STAGE CLEAR!", True, WHITE)
+        clear_text = large_font.render("스테이지 클리어!", True, WHITE)
         text_rect = clear_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         SCREEN.blit(clear_text, text_rect)
     
     if game_over:
-        game_over_text = large_font.render("GAME OVER", True, RED)
+        game_over_text = large_font.render("게임 오버", True, RED)
         text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
         SCREEN.blit(game_over_text, text_rect)
     
