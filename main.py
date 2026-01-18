@@ -102,7 +102,7 @@ RAINBOW_COLORS = [
 ]
 
 # 레벨 데이터
-LEVELS += [
+LEVELS = [
     # 5. Space Invader (픽셀 아트 캐릭터)
     [
         "                    ",
